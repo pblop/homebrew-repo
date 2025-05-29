@@ -1,4 +1,4 @@
-class Plantuml < Formula
+class PlantumlPdf < Formula
   desc "Draw UML diagrams"
   homepage "https://plantuml.com/"
   url "https://github.com/plantuml/plantuml/releases/download/v1.2025.2/plantuml-pdf-1.2025.2.jar"
