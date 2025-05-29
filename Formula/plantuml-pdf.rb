@@ -11,10 +11,6 @@ class PlantumlPdf < Formula
     strategy :github_latest
   end
 
-  bottle do
-    sha256 cellar: :any_skip_relocation, all: "1846557e79667e79f2ad6e129c6931f731d696daef53f7ba23702497cfa433a1"
-  end
-
   depends_on "graphviz"
   depends_on "openjdk"
 
