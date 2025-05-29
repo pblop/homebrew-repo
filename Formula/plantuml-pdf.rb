@@ -17,7 +17,7 @@ class PlantumlPdf < Formula
   def install
     jar = "plantuml-pdf.jar"
     libexec.install "plantuml-pdf-#{version}.jar" => jar
-    (bin/"plantuml").write <<~EOS
+    (bin/"plantuml-pdf").write <<~EOS
       #!/bin/bash
       if [[ "$*" != *"-gui"* ]]; then
         VMARGS="-Djava.awt.headless=true"
