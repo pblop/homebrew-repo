@@ -1,0 +1,143 @@
+name: Bottles
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      formula:
+        description: 'Specific formula to bottle (leave empty for all)'
+        required: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  discover:
+    name: Discover formulas
+    runs-on: ubuntu-latest
+    outputs:
+      formulas: ${{ steps.find-formulas.outputs.formulas }}
+    
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+      
+      - name: Find all formulas
+        id: find-formulas
+        run: |
+          if [ -n "${{ github.event.inputs.formula }}" ]; then
+            # If a specific formula is provided, use that
+            FORMULAS="[\"${{ github.event.inputs.formula }}\"]"
+          else
+            # Find all .rb files in Formula/ directory
+            FORMULAS=$(find Formula -name "*.rb" -type f | sed 's|Formula/||' | sed 's|\.rb$||' | jq -R -s -c 'split("\n")[:-1]')
+          fi
+          echo "formulas=$FORMULAS" >> $GITHUB_OUTPUT
+          echo "Found formulas: $FORMULAS"
+
+  bottle:
+    name: Build ${{ matrix.formula }} on ${{ matrix.os }}
+    needs: discover
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-13, macos-14, macos-15]
+        formula: ${{ fromJson(needs.discover.outputs.formulas) }}
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Homebrew/downloads
+          key: brew-${{ matrix.os }}-${{ matrix.formula }}-${{ github.sha }}
+          restore-keys: |
+            brew-${{ matrix.os }}-${{ matrix.formula }}-
+            brew-${{ matrix.os }}-
+
+      - name: Tap repository
+        run: |
+          TAP_NAME="${{ github.repository_owner }}/$(basename ${{ github.repository }} .git | sed 's/^homebrew-//')"
+          brew tap $TAP_NAME ${{ github.workspace }}
+
+      - name: Install dependencies
+        run: |
+          TAP_NAME="${{ github.repository_owner }}/$(basename ${{ github.repository }} .git | sed 's/^homebrew-//')"
+          brew install --only-dependencies $TAP_NAME/${{ matrix.formula }} || true
+
+      - name: Build bottle
+        run: |
+          TAP_NAME="${{ github.repository_owner }}/$(basename ${{ github.repository }} .git | sed 's/^homebrew-//')"
+          brew install --build-bottle --verbose $TAP_NAME/${{ matrix.formula }}
+          brew bottle --json --root-url=${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }} $TAP_NAME/${{ matrix.formula }}
+
+      - name: Upload bottles to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Create release if it doesn't exist (for workflow_dispatch)
+          if ! gh release view ${{ github.ref_name }} --repo ${{ github.repository }} 2>/dev/null; then
+            gh release create ${{ github.ref_name }} --title "${{ github.ref_name }}" --notes "Bottles for ${{ github.ref_name }}" --repo ${{ github.repository }}
+          fi
+          gh release upload ${{ github.ref_name }} *.bottle.* --repo ${{ github.repository }} --clobber
+
+      - name: Upload bottle JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottle-json-${{ matrix.formula }}-${{ matrix.os }}
+          path: '*.bottle.json'
+
+  merge-bottles:
+    name: Merge bottles for ${{ matrix.formula }}
+    needs: [discover, bottle]
+    strategy:
+      fail-fast: false
+      matrix:
+        formula: ${{ fromJson(needs.discover.outputs.formulas) }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Download bottle JSONs for ${{ matrix.formula }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bottle-json-${{ matrix.formula }}-*
+          merge-multiple: true
+
+      - name: Merge bottle JSONs
+        run: |
+          if ls *.bottle.json 1> /dev/null 2>&1; then
+            brew bottle --merge --write *.bottle.json
+          else
+            echo "No bottle JSONs found for ${{ matrix.formula }}"
+            exit 1
+          fi
+          
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/${{ matrix.formula }}.rb
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "${{ matrix.formula }}: add ${{ github.ref_name }} bottle"
+            git pull --rebase
+            git push
+          fi
