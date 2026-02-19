@@ -3,7 +3,7 @@ name: Bottles
 on:
   push:
     tags:
-      - 'v*'
+      - 'b*'
   workflow_dispatch:
     inputs:
       formula:
