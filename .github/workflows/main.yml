@@ -3,7 +3,7 @@ name: Bottles
 on:
   push:
     tags:
-      - 'b*'
+      - 'v*'
   workflow_dispatch:
     inputs:
       formula:
@@ -67,7 +67,15 @@ jobs:
       - name: Tap repository
         run: |
           TAP_NAME="${{ github.repository_owner }}/$(basename ${{ github.repository }} .git | sed 's/^homebrew-//')"
-          brew tap $TAP_NAME ${{ github.workspace }}
+          TAP_PATH="$(brew --repository)/Library/Taps/${{ github.repository_owner }}/homebrew-$(basename ${{ github.repository }} .git | sed 's/^homebrew-//')"
+          
+          # Create the tap directory structure
+          mkdir -p "$(dirname "$TAP_PATH")"
+          
+          # Symlink the checkout to the tap location
+          ln -s "$GITHUB_WORKSPACE" "$TAP_PATH"
+          
+          echo "Tapped $TAP_NAME at $TAP_PATH"
 
       - name: Install dependencies
         run: |
@@ -110,9 +118,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Tap repository
+        run: |
+          TAP_NAME="${{ github.repository_owner }}/$(basename ${{ github.repository }} .git | sed 's/^homebrew-//')"
+          TAP_PATH="$(brew --repository)/Library/Taps/${{ github.repository_owner }}/homebrew-$(basename ${{ github.repository }} .git | sed 's/^homebrew-//')"
+          
+          # Create the tap directory structure
+          mkdir -p "$(dirname "$TAP_PATH")"
+          
+          # Symlink the checkout to the tap location
+          ln -s "$GITHUB_WORKSPACE" "$TAP_PATH"
+          
+          echo "Tapped $TAP_NAME at $TAP_PATH"
 
       - name: Download bottle JSONs for ${{ matrix.formula }}
         uses: actions/download-artifact@v4
