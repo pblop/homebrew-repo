@@ -1,4 +1,4 @@
-cask "ai-studio" do
+cask "ai-studio@2025_0" do
   version "2025.0.0"
   sha256 "b0b309995c34491713ee04c488ac923f84759c698948ac138458edde09a81019"
 
