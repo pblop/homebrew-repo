@@ -23,7 +23,7 @@ cask "javaejss" do
     # Create app to launch from Finder/Launchpad.
     system_command "osacompile", args: [
       "-o", "#{staged_path}/JavaEJSS.app",
-      "-e", "do shell script \"#{staged_path}/javaejss > /dev/null 2>&1\""
+      "-e", "do shell script \"#{staged_path}/javaejss > /dev/null 2>&1 &\""
     ]
     system_command "curl", args: [
       "-sLo", "#{staged_path}/icon.png",
