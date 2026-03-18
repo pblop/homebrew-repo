@@ -16,7 +16,7 @@ cask "javaejs" do
     File.write "#{staged_path}/javaejs", <<~EOS
       #!/bin/sh
       export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
-      cd "#{staged_path}/JavaScript_EJS_6.02_BETA" | exit 1
+      cd "#{staged_path}/JavaScript_EJS_6.02_BETA" || exit 1
       exec "${JAVA_HOME}/bin/java" -jar "EjsConsole.jar" "$@"
     EOS
 
