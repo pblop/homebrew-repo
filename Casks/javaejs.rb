@@ -9,15 +9,13 @@ cask "javaejs" do
 
   depends_on cask: "zulu@8"
 
-  suite "JavaScript_EJS_6.02_BETA", target: "JavaEJS"
+  binary "javaejs"
 
   preflight do
     File.write "#{staged_path}/javaejs", <<~EOS
       #!/bin/sh
       export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
-      exec "${JAVA_HOME}/bin/java" -jar "#{appdir}/JavaEJS/EjsConsole.jar" "$@"
+      exec "${JAVA_HOME}/bin/java" -jar "#{staged_path}/JavaScript_EJS_6.02_BETA/EjsConsole.jar" "$@"
     EOS
   end
-
-  binary "javaejs"
 end
