@@ -6,7 +6,8 @@ class Javaejs < Formula
   sha256 "3e79a16c68126420a360747d7a31314b2ab3491d94afe737d70b20d1c865bcd4"
   license "GPL-3.0-or-later"
 
-  depends_on "openjdk@8"
+  # openjdk@8 requires x86_64, so zulu it is.
+  depends_on "zulu@8"
 
   def install
     libexec.install Dir["*"]
