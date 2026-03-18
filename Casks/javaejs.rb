@@ -41,6 +41,6 @@ cask "javaejs" do
       "#{staged_path}/icon.png",
       "--out", "#{staged_path}/JavaEJS.app/Contents/Resources/applet.icns"
     ]
-    system_command "rm", args: ["#{staged_path}/icon.png", "#{staged_path}/icon.icns"]
+    system_command "rm", args: ["#{staged_path}/icon.png"]
   end
 end
