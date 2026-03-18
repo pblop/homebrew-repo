@@ -41,6 +41,17 @@ cask "javaejss" do
       "#{staged_path}/icon.png",
       "--out", "#{staged_path}/JavaEJSS.app/Contents/Resources/applet.icns"
     ]
+    # Assets.car and applet.rsrc contain icons that will override the custom
+    # icon.
+    # I'm not sure which of the two is responsible, so remove both just in case.
+    system_command "rm", args: [
+      "-f",
+      "#{staged_path}/JavaEJSS.app/Contents/Resources/Assets.car",
+      "#{staged_path}/JavaEJSS.app/Contents/Resources/applet.rsrc"
+    ]
     system_command "rm", args: ["#{staged_path}/icon.png"]
+    # Update the modification time of the app bundle to ensure the new icon is
+    # picked up.
+    system_command "touch", args: ["#{staged_path}/JavaEJSS.app"]
   end
 end
