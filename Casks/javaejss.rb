@@ -1,4 +1,4 @@
-cask "javaejs" do
+cask "javaejss" do
   version "6.02_BETA_210309"
   sha256 "3e79a16c68126420a360747d7a31314b2ab3491d94afe737d70b20d1c865bcd4"
 
@@ -9,11 +9,11 @@ cask "javaejs" do
 
   depends_on cask: "zulu@8"
 
-  app "JavaEJS.app"
-  binary "javaejs"
+  app "JavaEJSS.app"
+  binary "javaejss"
 
   preflight do
-    File.write "#{staged_path}/javaejs", <<~EOS
+    File.write "#{staged_path}/javaejss", <<~EOS
       #!/bin/sh
       export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
       cd "#{staged_path}/JavaScript_EJS_6.02_BETA" || exit 1
@@ -22,8 +22,8 @@ cask "javaejs" do
 
     # Create app to launch from Finder/Launchpad.
     system_command "osacompile", args: [
-      "-o", "#{staged_path}/JavaEJS.app",
-      "-e", "do shell script \"#{staged_path}/javaejs > /dev/null 2>&1\""
+      "-o", "#{staged_path}/JavaEJSS.app",
+      "-e", "do shell script \"#{staged_path}/javaejss > /dev/null 2>&1\""
     ]
     system_command "curl", args: [
       "-sLo", "#{staged_path}/icon.png",
@@ -39,7 +39,7 @@ cask "javaejs" do
     system_command "sips", args: [
       "-s", "format", "icns",
       "#{staged_path}/icon.png",
-      "--out", "#{staged_path}/JavaEJS.app/Contents/Resources/applet.icns"
+      "--out", "#{staged_path}/JavaEJSS.app/Contents/Resources/applet.icns"
     ]
     system_command "rm", args: ["#{staged_path}/icon.png"]
   end
